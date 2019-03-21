@@ -1,0 +1,3 @@
+quota:
+  project: my-gcp-project
+  interval: 24h
