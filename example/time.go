@@ -7,9 +7,7 @@ import (
 )
 
 func init() {
-	checkd.Register(checkTime, 10*time.Second)
-}
-
-func checkTime() {
-	checkd.Gauge("unix_time_seconds", "Current Unix time").Set(float64(time.Now().UnixNano()))
+	checkd.Every(10*time.Second, func() {
+		checkd.Gauge("unix_time_seconds", "Current Unix time").SetToCurrentTime()
+	})
 }
