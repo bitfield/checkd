@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	checkd.Register(checkCounter, 1*time.Minute)
+	checkd.Every(time.Minute, checkCounter)
 }
 
 func checkCounter() {
