@@ -38,6 +38,19 @@ func TestGauge(t *testing.T) {
 	}
 }
 
+func TestGaugeVec(t *testing.T) {
+	gaugevecs = map[string]prometheus.GaugeVec{}
+	GaugeVec("test_set_gaugevec", "", []string{"testLabel"})
+	if _, ok := gaugevecs["test_set_gaugevec"]; !ok {
+		t.Fatalf("gaugevec not registered")
+	}
+	g := GaugeVec("test_set_gaugevec", "", []string{"testLabel"})
+	g.WithLabelValues("foo").Set(1)
+	if len(gaugevecs) != 1 {
+		t.Fatalf("gauge not cached")
+	}
+}
+
 func TestCounter(t *testing.T) {
 	counters = map[string]prometheus.Counter{}
 	Counter("test_set_counter", "")

@@ -22,12 +22,6 @@ type check struct {
 // checks is the list of checks to be run.
 var checks = []check{}
 
-// gauges is the map of registered gauges.
-var gauges = map[string]prometheus.Gauge{}
-
-// counters is the map of registered counters.
-var counters = map[string]prometheus.Counter{}
-
 // Every schedules the specified check function to run at the specified interval.
 func Every(interval time.Duration, checkFunc func()) {
 	checks = append(checks, check{checkFunc, interval})
@@ -49,6 +43,9 @@ func Start() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", Port), nil))
 }
 
+// gauges is the map of registered gauges.
+var gauges = map[string]prometheus.Gauge{}
+
 // Gauge registers and returns a new Prometheus gauge metric. If the gauge has
 // already been registered, Gauge returns the existing gauge.
 func Gauge(name, help string) prometheus.Gauge {
@@ -61,6 +58,25 @@ func Gauge(name, help string) prometheus.Gauge {
 	}
 	return gauges[name]
 }
+
+// gauges is the map of registered gauge vectors.
+var gaugevecs = map[string]prometheus.GaugeVec{}
+
+// GaugeVec registers and returns a new Prometheus gauge vector. If the gauge has
+// already been registered, Gauge returns the existing gauge.
+func GaugeVec(name, help string, labels []string) prometheus.GaugeVec {
+	if _, ok := gaugevecs[name]; !ok {
+		gaugevecs[name] = *prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: name,
+			Help: help,
+		}, labels)
+		prometheus.MustRegister(gaugevecs[name])
+	}
+	return gaugevecs[name]
+}
+
+// counters is the map of registered counters.
+var counters = map[string]prometheus.Counter{}
 
 // Counter registers and returns a new Prometheus counter metric. If the counter has
 // already been registered, Counter returns the existing counter.
