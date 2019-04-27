@@ -1,6 +1,7 @@
 package checkd
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -12,7 +13,7 @@ import (
 func TestRunChecks(t *testing.T) {
 	checks = []check{}
 	var func1Runs, func2Runs int
-	log.SetOutput(ioutil.Discard)
+	Logger.SetOutput(ioutil.Discard)
 	Every(2*time.Millisecond, func() { func1Runs++ })
 	Every(6*time.Millisecond, func() { func2Runs++ })
 	go Start()
@@ -60,5 +61,25 @@ func TestCounter(t *testing.T) {
 	Counter("test_set_counter", "").Inc()
 	if len(gauges) != 1 {
 		t.Fatalf("counter not cached")
+	}
+}
+
+func TestLogAndDebug(t *testing.T) {
+	buf := &bytes.Buffer{}
+	Logger = *log.New(buf, "", 0)
+	Logger.Printf("foo")
+	if buf.String() != "foo\n" {
+		t.Fatalf("want %q, got %q", "foo\n", buf.String())
+	}
+	buf2 := &bytes.Buffer{}
+	Logger = *log.New(buf2, "", 0)
+	Debug("foo")
+	if buf2.String() != "" {
+		t.Fatalf("expected no log output with debugging disabled, got %q", buf2.String())
+	}
+	EnableDebug()
+	Debug("foo")
+	if buf2.String() != "foo\n" {
+		t.Fatalf("want %q with debugging enabled, got %q", "foo\n", buf2.String())
 	}
 }

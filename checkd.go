@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,6 +13,12 @@ import (
 
 // Port is the metrics listener port (default 8666).
 var Port = 8666
+
+// debug enables debug logging.
+var debug bool
+
+// Logger sets the log destination. The default is the standard logger.
+var Logger = *log.New(os.Stderr, "", log.LstdFlags)
 
 // check represents a check, containing a check function and a run interval.
 type check struct {
@@ -29,7 +36,7 @@ func Every(interval time.Duration, checkFunc func()) {
 
 // Start runs all checks concurrently.
 func Start() {
-	log.Printf("starting %d checks", len(checks))
+	Logger.Printf("starting %d checks", len(checks))
 	for _, c := range checks {
 		go func(c check) {
 			for {
@@ -38,9 +45,21 @@ func Start() {
 			}
 		}(c)
 	}
-	log.Printf("starting metrics listener on port %d", Port)
+	Logger.Printf("starting metrics listener on port %d", Port)
 	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", Port), nil))
+	Logger.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", Port), nil))
+}
+
+// EnableDebug turns on debug logging.
+func EnableDebug() {
+	debug = true
+}
+
+// Debug logs a debug message if debugging is enabled.
+func Debug(msg string) {
+	if debug {
+		Logger.Printf(msg)
+	}
 }
 
 // gauges is the map of registered gauges.
@@ -59,7 +78,7 @@ func Gauge(name, help string) prometheus.Gauge {
 	return gauges[name]
 }
 
-// gauges is the map of registered gauge vectors.
+// gaugevecs is the map of registered gauge vectors.
 var gaugevecs = map[string]prometheus.GaugeVec{}
 
 // GaugeVec registers and returns a new Prometheus gauge vector. If the gauge has
